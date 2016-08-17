@@ -1,10 +1,17 @@
-import sys, os, subprocess,time
+import sys, os, subprocess,time, configparser
 import random
 import smtplib
 from shutil import move
 from email.message import EmailMessage
 from email.headerregistry import Address
 from email.utils import make_msgid
+
+config      = configparser.RawConfigParser()
+configdir   = "Config.ini"
+config.read(configdir)
+
+#Será usado próximamente
+tosort = {16/9:"16x9/", 16/10:"16x9", 9/16:"Vertical/", 4/3:"4x3/"}
 
 source = "/home/davo/Imágenes/Wallpapers/"
 print("Source:", source)
@@ -52,8 +59,8 @@ if "--mail" in sys.argv and len(wallsorted) > 0:
     sender = "david@ddavo.me"
     receiv = "david@ddavo.me"
     msg = EmailMessage()
-    msg["From"] = Address("Davo-Arch10", "david@ddavo.me")
-    msg["To"] = Address("Yo mismo", "david@ddavo.me")
+    msg["From"] = Address(config.get("MAIL", "from-name"), "arch@ddavo.me")
+    msg["To"] = Address(config.get("MAIL", "to-name"), config.get("MAIL", "to-addr"))
     msg['Subject'] = "Wallpapers sorted " + time.strftime("%d/%m/%Y %H:%M:%S")
     msg.preamble = "WTF"
     contenido = "\n".join(wallsorted)
