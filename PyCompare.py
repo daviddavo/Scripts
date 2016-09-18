@@ -14,17 +14,17 @@ for i in tmp2:
         tmp2.remove(i)
 #print(tmp2)
 
-if "--mail" in sys.argv and len(tmp.split("\n")) > 2:
+if "--mail" in sys.argv and int((len(tmp.split("\n"))-1)/4) > 2:
     import smtplib
 
     from email.message import EmailMessage
     from email.headerregistry import Address
     from email.utils import make_msgid
 
-    sender = "david@ddavo.me"
+    sender = "arch-10@ddavo.me"
     receiv = "david@ddavo.me"
     msg = EmailMessage()
-    msg["From"] = Address("Davo-Arch10", "david@ddavo.me")
+    msg["From"] = Address("Davo-Arch10", "arch-10@ddavo.me")
     msg["To"] = Address("Yo mismo", "david@ddavo.me")
     msg['Subject'] = "Wallpapers compared " + time.strftime("%d/%m/%Y %H:%M:%S")
     msg.preamble = "WTF"
@@ -37,5 +37,5 @@ if "--mail" in sys.argv and len(tmp.split("\n")) > 2:
         print("Successfully sent email")
         smtpObj.quit()
     except:
-        print("Unable to to send email")
+        print("Unable to send email")
         raise
