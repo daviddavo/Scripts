@@ -6,6 +6,9 @@ ttl = 60*5
 
 tmpvol = 100 #El volumen al que quieres que se ponga la radio
 
+with open("tmp.log", "w") as f:
+    f.write("LALALALALA")
+
 #Configuramos unas cuantas variables
 session_bus = dbus.SessionBus()
 player = session_bus.get_object('org.mpris.clementine', '/Player')
@@ -22,16 +25,32 @@ meta = ifacetl.GetMetadata(current)
 #print(meta)
 #print(meta["location"])
 
-#Reproducimos la radio
-if current >= 0:
-    ifacetl.AddTrack(radio_URI, 1)
-    ifacepl.VolumeSet(tmpvol)
-    time.sleep(10)
-    torm = ifacetl.GetCurrentTrack()
-    print("Torm", torm)
-
-    time.sleep(ttl-10) #Tiempo de espera
-
+def cancel():
+    global vol
+    global current
+    global torm
     ifacepl.VolumeSet(vol)
     ifacetl.PlayTrack(current)
     ifacetl.DelTrack(torm)
+    print()
+
+#Reproducimos la radio
+with open("tmp.log", "w") as f:
+    f.write("LOLOLOL")
+if current >= 0:
+    ifacetl.AddTrack(radio_URI, 1)
+    ifacepl.VolumeSet(tmpvol)
+    try:
+        time.sleep(5)
+    except KeyboardInterrupt:
+        cancel()
+    torm = ifacetl.GetCurrentTrack()
+    print("Torm", torm)
+
+    for i in range(ttl-5):
+        try:
+            time.sleep(1)
+            print("Time left: ", '{:>3}'.format((ttl-10)-i), end="\r")
+        except KeyboardInterrupt:
+            break
+    cancel()
