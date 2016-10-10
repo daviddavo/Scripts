@@ -25,32 +25,20 @@ meta = ifacetl.GetMetadata(current)
 #print(meta)
 #print(meta["location"])
 
-def cancel():
-    global vol
-    global current
-    global torm
-    ifacepl.VolumeSet(vol)
-    ifacetl.PlayTrack(current)
-    ifacetl.DelTrack(torm)
-    print()
-
 #Reproducimos la radio
 with open("tmp.log", "w") as f:
     f.write("LOLOLOL")
 if current >= 0:
     ifacetl.AddTrack(radio_URI, 1)
     ifacepl.VolumeSet(tmpvol)
-    try:
-        time.sleep(5)
-    except KeyboardInterrupt:
-        cancel()
+    time.sleep(10)
     torm = ifacetl.GetCurrentTrack()
     print("Torm", torm)
 
-    for i in range(ttl-5):
-        try:
-            time.sleep(1)
-            print("Time left: ", '{:>3}'.format((ttl-10)-i), end="\r")
-        except KeyboardInterrupt:
-            break
-    cancel()
+    for i in range(ttl-10):
+        time.sleep(1)
+        print("Time left: ", '{:>3}'.format((ttl-10)-i), end="\r")
+
+    ifacepl.VolumeSet(vol)
+    ifacetl.PlayTrack(current)
+    ifacetl.DelTrack(torm)

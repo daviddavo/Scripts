@@ -3,6 +3,7 @@ import os, random, datetime
 Dir1 = "/home/davo/Imágenes/Wallpapers/16x9/"
 Dir2 = Dir1
 Dir3 = "/home/davo/Imágenes/Wallpapers/Vertical/"
+Dir4 = "/home/davo/Imágenes/Wallpapers/4x3/"
 log  = "/home/davo/Scripts/BckLog.log"
 
 #feh --bg-fill /Directorio/Imagen.png
@@ -10,9 +11,10 @@ log  = "/home/davo/Scripts/BckLog.log"
 file1 = Dir1 + random.choice(os.listdir(Dir1))
 file2 = Dir2 + random.choice(os.listdir(Dir2))
 file3 = "'" + Dir3 + random.choice(os.listdir(Dir3)) + "'"
+file4 = "'" + Dir4 + random.choice(os.listdir(Dir4)) + "'"
 
 print(file1, file2, file3)
-os.system("DISPLAY=:0 feh --bg-fill " + file1 + " --bg-fill " + file2 + " --bg-fill " + file3)
+os.system("DISPLAY=:0 feh --bg-fill " + file1 + " --bg-fill " + file2 + " --bg-fill " + file3 + " --bg-fill " + file4)
 
 
     
