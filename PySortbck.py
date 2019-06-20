@@ -1,44 +1,91 @@
+#!/usr/bin/python3
 import sys, os, subprocess,time, configparser
 import random
-import smtplib
-from shutil import move
-from email.message import EmailMessage
-from email.headerregistry import Address
-from email.utils import make_msgid
+from PIL import Image
+import mimetypes
 
-config      = configparser.RawConfigParser()
-configdir   = "Config.ini"
-config.read(configdir)
+CONFIG_DIR   = "Config.ini"
+DEBUG = True
+MORELESS = .10
+UNKNOWN_FOLDER = "UnknownResolution"
+# UNKNOWN_FOLDER = None
+tosort = [(16/9,"16x9/"), (9/16,"Vertical/"), (4/3,"4x3/")]
 
-#Será usado próximamente
-tosort = {16/9:"16x9/", 16/10:"16x9", 9/16:"Vertical/", 4/3:"4x3/"}
+def processRatio(files, destination, ratio):
+    pass
 
-source = "/home/davo/Imágenes/Wallpapers/"
-print("Source:", source)
-files = os.listdir(source)
-os.chdir(source)
-wallsorted = []
+def processFolder(fname):
+    files = os.listdir(fname)
 
-def main(ratio, destination):
-    global files
-    global source
-    
-    files = os.listdir(source)
+    toMove = {}
+    if UNKNOWN_FOLDER is not None:
+        if not os.path.exists(os.path.join(fname, UNKNOWN_FOLDER)):
+            print("Creating folder %s" % fname)
+            os.makedirs(os.path.join(fname, UNKNOWN_FOLDER))
+        toMove[UNKNOWN_FOLDER] = []
+
+    # First we create needed folders
+    for r in tosort:
+        toMove[r[1]] = []
+        destination = os.path.join(fname, r[1])
+        if not os.path.exists(destination):
+            print("Creating folder %s" % fname)
+            os.makedirs(destination)
+
+    for f in files:
+        af = os.path.join(fname, f)
+
+        mime = mimetypes.guess_type(af)[0]
+        if mime is not None and mime.split("/")[0] == "image":
+            im = Image.open(af)
+            w, h = im.size
+            
+            for r in tosort:
+                sort = False
+                if (r[0]-MORELESS < w/h < r[0]+MORELESS):
+                    toMove[r[1]].append(f)
+                    print("Moving %s to %s" % (f, r[1]))
+                    sort = True
+                    break
+
+            if UNKNOWN_FOLDER is not None and not sort:
+                toMove[UNKNOWN_FOLDER].append(f)
+
+    for k, v in toMove.items():
+        for f in v:
+            ffrom = os.path.join(fname, f)
+            fto = os.path.join(fname, k, f)
+            if DEBUG: print("Moving from %s to %s" % (ffrom, fto))
+            os.rename(ffrom, fto)
+
+
+                
+                
+
+def main():
+    config = configparser.RawConfigParser()
+    config.read(CONFIG_DIR)
+
+    sourceFolder = config.get("BACKGROUNDS", "background-folder")
+    processFolder(sourceFolder)
+   
+    '''
+    files = os.listdir(SOURCE)
     #print("R,d", ratio, destination)
     if not os.path.exists(destination):
         print("No existia la carpeta, la hemos tenido que crear")
         os.makedirs(destination)
     print("Destination", destination)
     for f in files:
-        if f.endswith(".png") or f.endswith(".jpg"):
+        if f.endswith(".png") or f.endswith(".jpg") or f.endswith(".jpeg"):
             try:
                 out = subprocess.check_output('identify -format "%[fx:abs((' + str(ratio) + ')-(w/h))]:%M\n" ' + f + ' | sort -n -k1 -t:', shell=True).decode("utf-8").replace("\n", "").split(":")
                 #print(out[0] + ":" + out[1])
                 if float(out[0]) < 0.15:
                     try:
-                        move(source + out[1],destination + out[1])
+                        move(SOURCE + out[1],destination + out[1])
                         print("Moviendo archivo", out[1])
-                        wallsorted.append("Movido " + source + out[1] + " a " + destination + out[1])
+                        wallsorted.append("Movido " + SOURCE + out[1] + " a " + destination + out[1])
                         files.remove(f)
                     except:
                         print("No se ha podido copiar", out[1])
@@ -49,30 +96,7 @@ def main(ratio, destination):
         else:
             #print(f, "no termina en png, jpg")
             pass
+    '''
 
-main(16/9, "16x9/")
-main(16/10, "16x9/")
-main(9/16, "Vertical/")
-main(4/3, "4x3/")
-
-if "--mail" in sys.argv and len(wallsorted) > 0:
-    sender = "david@ddavo.me"
-    receiv = "david@ddavo.me"
-    msg = EmailMessage()
-    msg["From"] = Address(config.get("MAIL", "from-name"), "arch@ddavo.me")
-    msg["To"] = Address(config.get("MAIL", "to-name"), config.get("MAIL", "to-addr"))
-    msg['Subject'] = "Wallpapers sorted " + time.strftime("%d/%m/%Y %H:%M:%S")
-    msg.preamble = "WTF"
-    contenido = "\n".join(wallsorted)
-    msg.set_content(contenido)
-
-    #message = msg.as_string()
-
-    try:
-        smtpObj = smtplib.SMTP('smtp.ddavo.me')
-        smtpObj.send_message(msg)
-        print("Successfully sent email")
-        smtpObj.quit()
-    except:
-        print("Unable to to send email")
-        raise
+if __name__ == "__main__":
+    main()
