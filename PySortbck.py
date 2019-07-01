@@ -11,27 +11,8 @@ UNKNOWN_FOLDER = "UnknownResolution"
 # UNKNOWN_FOLDER = None
 tosort = [(16/9,"16x9/"), (9/16,"Vertical/"), (4/3,"4x3/")]
 
-def processRatio(files, destination, ratio):
-    pass
-
-def processFolder(fname):
+def getToMove(toMove, fname):
     files = os.listdir(fname)
-
-    toMove = {}
-    if UNKNOWN_FOLDER is not None:
-        if not os.path.exists(os.path.join(fname, UNKNOWN_FOLDER)):
-            print("Creating folder %s" % fname)
-            os.makedirs(os.path.join(fname, UNKNOWN_FOLDER))
-        toMove[UNKNOWN_FOLDER] = []
-
-    # First we create needed folders
-    for r in tosort:
-        toMove[r[1]] = []
-        destination = os.path.join(fname, r[1])
-        if not os.path.exists(destination):
-            print("Creating folder %s" % fname)
-            os.makedirs(destination)
-
     for f in files:
         af = os.path.join(fname, f)
 
@@ -51,6 +32,25 @@ def processFolder(fname):
             if UNKNOWN_FOLDER is not None and not sort:
                 toMove[UNKNOWN_FOLDER].append(f)
 
+def processFolder(fname):
+
+    toMove = {}
+    if UNKNOWN_FOLDER is not None:
+        if not os.path.exists(os.path.join(fname, UNKNOWN_FOLDER)):
+            print("Creating folder %s" % fname)
+            os.makedirs(os.path.join(fname, UNKNOWN_FOLDER))
+        toMove[UNKNOWN_FOLDER] = []
+
+    # First we create needed folders
+    for r in tosort:
+        toMove[r[1]] = []
+        destination = os.path.join(fname, r[1])
+        if not os.path.exists(destination):
+            print("Creating folder %s" % fname)
+            os.makedirs(destination)
+
+    getToMove(toMove, fname)
+
     for k, v in toMove.items():
         for f in v:
             ffrom = os.path.join(fname, f)
@@ -68,35 +68,6 @@ def main():
 
     sourceFolder = config.get("BACKGROUNDS", "background-folder")
     processFolder(sourceFolder)
-   
-    '''
-    files = os.listdir(SOURCE)
-    #print("R,d", ratio, destination)
-    if not os.path.exists(destination):
-        print("No existia la carpeta, la hemos tenido que crear")
-        os.makedirs(destination)
-    print("Destination", destination)
-    for f in files:
-        if f.endswith(".png") or f.endswith(".jpg") or f.endswith(".jpeg"):
-            try:
-                out = subprocess.check_output('identify -format "%[fx:abs((' + str(ratio) + ')-(w/h))]:%M\n" ' + f + ' | sort -n -k1 -t:', shell=True).decode("utf-8").replace("\n", "").split(":")
-                #print(out[0] + ":" + out[1])
-                if float(out[0]) < 0.15:
-                    try:
-                        move(SOURCE + out[1],destination + out[1])
-                        print("Moviendo archivo", out[1])
-                        wallsorted.append("Movido " + SOURCE + out[1] + " a " + destination + out[1])
-                        files.remove(f)
-                    except:
-                        print("No se ha podido copiar", out[1])
-                        wallsorted.append("No se ha podido copiar " + out[1])
-                        raise
-            except:
-                print("Error con {}".format(f))
-        else:
-            #print(f, "no termina en png, jpg")
-            pass
-    '''
 
 if __name__ == "__main__":
     main()

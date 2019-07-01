@@ -1,5 +1,7 @@
 BckLog.log
 Spider
-AutoUploader/
+AutoUploader
 credentials.json
 __pycache__
+*.csv
+.vscode
