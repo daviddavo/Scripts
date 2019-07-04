@@ -5,11 +5,15 @@ from PIL import Image
 import mimetypes
 
 CONFIG_DIR   = "Config.ini"
+
+config = configparser.RawConfigParser()
+config.read(CONFIG_DIR)
+
 DEBUG = True
 MORELESS = .10
-UNKNOWN_FOLDER = "UnknownResolution"
-ERROR_FOLDER = "Error"
-TOO_LOW_FOLDER = "TooLowResolution"
+UNKNOWN_FOLDER = config.get("BACKGROUNDS", "unknown-subfolder")
+ERROR_FOLDER   = config.get("BACKGROUNDS", "error-subfolder")
+TOO_LOW_FOLDER = config.get("BACKGROUNDS", "too-low-resolution-subfolder")
 # UNKNOWN_FOLDER = None
 tosort = [(16/9,"16x9/", 1920, 1080), (9/16,"Vertical/", 1080, 1920), (4/3,"4x3/", 1400, 1050)]
 
@@ -79,9 +83,6 @@ def processFolder(fname):
                 
 
 def main():
-    config = configparser.RawConfigParser()
-    config.read(CONFIG_DIR)
-
     sourceFolder = config.get("BACKGROUNDS", "background-folder")
     processFolder(sourceFolder)
 
