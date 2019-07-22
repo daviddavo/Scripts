@@ -1,5 +1,7 @@
-import os
+import os, sys
 import threading
+import sqlite3
+import random
 from gi.repository import GLib
 
 from Xlib import X,display
@@ -27,8 +29,13 @@ screen_arr = [
     }
 ]
 
-def thr_set_background(head, fname):
-    os.system("nitrogen --save --random --head={} --set-zoom-fill '{}'".format(head, fname))
+def thr_set_background(head, fname, howchanged):
+    con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "wallpapers.db"))
+    file = os.path.join(fname, random.choice(os.listdir(fname)))
+    os.system("/usr/bin/nitrogen --save --head={} --set-zoom-fill '{}'".format(head, file))
+    con.execute("INSERT INTO wallpapers (head, path, howchanged) VALUES (?,?,?)", (head, file, howchanged))
+    con.commit()
+    con.close()
 
 #feh --bg-fill /Directorio/Imagen.png
 #Nota, copia .fehbg a esta carpeta
@@ -48,8 +55,10 @@ def main():
         # if (r[0]-MORELESS < w/h < r[0]+MORELESS):
     '''     
 
+    howchanged = sys.argv[1] if len(sys.argv)>1 else "unknown"
+
     for i, screen in enumerate(screen_arr):
-        t = threading.Thread(target=thr_set_background, args=(i, screen["folder"]))
+        t = threading.Thread(target=thr_set_background, args=(i, screen["folder"], howchanged))
         t.start()
 
 if __name__ == "__main__":
