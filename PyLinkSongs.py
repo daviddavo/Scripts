@@ -2,7 +2,7 @@
 import os, glob
 import configparser
 
-CONFIG_DIR = "Config.ini"
+CONFIG_DIR = "/home/davo/Scripts/Config.ini"
 
 config = configparser.RawConfigParser()
 config.read(CONFIG_DIR)
