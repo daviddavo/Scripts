@@ -4,31 +4,27 @@ FROM wallpapers w
 ORDER BY `date` ASC;
 */
 
-/*
-SELECT `head`, `path`, count(*) cnt
-FROM wallpapers w
-WHERE lead(howchanged, 'unknown') OVER(PARTITION BY `head` ORDER BY `date` ASC) = 'manual'
-GROUP BY `head`,`path`
-ORDER BY cnt ASC;
-*/
+-- INSERT INTO wallpapers(head,path,howchanged) VALUES (-1,'path1','idk');
+-- INSERT INTO wallpapers(head,path,howchanged) VALUES (-1,'path2','manual');
+-- DELETE FROM wallpapers where head=-1;
 
--- Este funciona pero es lento de cojones
-SELECT head,`path`, count(*)/(
+-- Ahora sí joder
+SELECT `head`, `path`, count(*)/(
     SELECT avg(cnt) FROM (
-        SELECT COUNT(*) AS cnt, head
+        SELECT count(*) AS cnt
         FROM wallpapers
         WHERE head=w.head
         GROUP BY `path`
     )
-) pct
-FROM wallpapers w
-WHERE (SELECT MAX(w2.`date`)
-    FROM wallpapers w2
-    WHERE w2.head = w.head AND w2.`date` > w.`date`) IN (SELECT `date` FROM wallpapers WHERE head = w.head AND howchanged = 'manual' AND date = (SELECT MAX(w2.`date`)
-    FROM wallpapers w2
-    WHERE w2.head = w.head AND w2.`date` > w.`date`))
-GROUP BY head,`path`
-ORDER BY pct;
+) avg, count(*) cnt
+FROM wallpapers w 
+JOIN (
+    SELECT `head`, `path`, LEAD(howchanged, 1, 'unknown') OVER (PARTITION BY `head` ORDER BY `date` ASC) ld
+    FROM wallpapers
+) USING (`head`, `path`)
+WHERE ld = 'manual'
+GROUP BY `head`,`path`
+ORDER BY avg DESC;
 
 -- Esta consulta nos da el promedio de veces que ha pasado cada wallpaper
 -- agrupado por head
@@ -38,5 +34,5 @@ ORDER BY pct;
 SELECT avg(cnt), head FROM (
     SELECT COUNT(*) AS cnt, head
     FROM wallpapers
-    GROUP BY `path`, `head`
+    GROUP BY `path`, head
 ) GROUP BY head;
