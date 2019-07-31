@@ -11,7 +11,7 @@ from Xlib.ext import randr
 
 MORELESS = .10
 
-CONFIG_DIR = "/home/davo/Scripts/Config.ini"
+CONFIG_DIR = ["/home/davo/Scripts/Config.ini", "/home/davo/.config/scripts/config.ini"]
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 config = configparser.RawConfigParser()
@@ -40,9 +40,10 @@ def main():
 
     interval = config.getint("BACKGROUNDS", "rotate-interval")
     config.set("BACKGROUNDS", "rotate-next", (datetime.now()+timedelta(minutes=interval)).strftime(DATE_FORMAT))
-    with open(CONFIG_DIR, 'w') as f:
+    with open(CONFIG_DIR[-1], 'w') as f:
         config.write(f)
 
+    print (config.get("BACKGROUNDS", "number-screens"))
     for i in range(config.getint("BACKGROUNDS", "number-screens")):
         fname = os.path.join(ImgFolder, config.get("BACKGROUNDS", "screen-"+str(i)+"-folder"))
         t = threading.Thread(target=thr_set_background, args=(i, fname, howchanged))
