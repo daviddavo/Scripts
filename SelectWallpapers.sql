@@ -8,6 +8,25 @@ ORDER BY `date` ASC;
 -- INSERT INTO wallpapers(head,path,howchanged) VALUES (-1,'path2','manual');
 -- DELETE FROM wallpapers where head=-1;
 
+DROP VIEW wallpapers_leadchange;
+CREATE VIEW wallpapers_leadchange AS
+SELECT `date`, `head`, `path`, LEAD(howchanged, 1, 'unknown') OVER (PARTITION BY `head` ORDER BY date ASC) `leadchange`
+FROM wallpapers
+ORDER BY date DESC;
+
+-- Ratio es el numero de veces que se ha cambiado manualmente
+-- respecto al numero de veces que ha aparecido el wallpaper
+SELECT `head`, `path`, count(*)*1.0/totalcnt ratio, count(*) cnt, totalcnt
+FROM wallpapers_leadchange JOIN (
+	SELECT head, path, count(*) totalcnt
+	FROM wallpapers_leadchange
+	GROUP BY head, path
+) USING (head, path)
+WHERE leadchange = 'manual'
+GROUP BY `head`, `path`
+HAVING cnt > 1	-- Así no salen los que sólo has saltado una vez
+ORDER BY ratio DESC;
+
 -- Ahora sí joder
 SELECT `head`, `path`, count(*)/(
     SELECT avg(cnt) FROM (
