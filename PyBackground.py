@@ -1,6 +1,7 @@
 import os, sys
 from datetime import datetime, timedelta
 import threading
+import argparse
 import configparser
 import sqlite3
 import random
@@ -29,12 +30,34 @@ def thr_set_background(head, fname, howchanged):
     con.commit()
     con.close()
 
+def getArgParser(head_count=1):
+    parser = argparse.ArgumentParser(
+        description="Welcome to my small script made for changing backgrounds in a multi-head setup")
+
+    parser.add_argument("howchanged",
+        help="Background change mode", 
+        choices=["manual","chron"], 
+        default="manual", 
+        nargs="?")
+
+    parser.add_argument("-H", "--head", 
+        help="Head(s) on which to change the wallpaper", 
+        choices=range(0,head_count), 
+        type=int,
+        nargs="+",
+        dest="heads",
+        default=list(range(0,head_count)))
+
+    return parser
+
 #feh --bg-fill /Directorio/Imagen.png
 #Nota, copia .fehbg a esta carpeta
 def main():
-    howchanged = sys.argv[1] if len(sys.argv)>1 else "unknown"
+    parser = getArgParser(config.getint("BACKGROUNDS", "number-screens"))
+    args = parser.parse_args()
+    print(args.heads)
     
-    if (howchanged == "rotate" and 
+    if (args.howchanged == "chron" and 
         config.has_option("BACKGROUNDS", "rotate-next") and 
         datetime.strptime(config.get("BACKGROUNDS", "rotate-next"), DATE_FORMAT) > datetime.now()): return
 
@@ -43,10 +66,9 @@ def main():
     with open(CONFIG_DIR[-1], 'w') as f:
         config.write(f)
 
-    print (config.get("BACKGROUNDS", "number-screens"))
-    for i in range(config.getint("BACKGROUNDS", "number-screens")):
+    for i in args.heads:
         fname = os.path.join(ImgFolder, config.get("BACKGROUNDS", "screen-"+str(i)+"-folder"))
-        t = threading.Thread(target=thr_set_background, args=(i, fname, howchanged))
+        t = threading.Thread(target=thr_set_background, args=(i, fname, args.howchanged))
         t.start()
         
 
