@@ -59,19 +59,20 @@ def main():
     args = parser.parse_args()
     print(args.heads)
     
-    if (args.howchanged == "chron" and 
-        config.has_option("BACKGROUNDS", "rotate-next") and 
-        datetime.strptime(config.get("BACKGROUNDS", "rotate-next"), DATE_FORMAT) > datetime.now()): return
-
     interval = config.getint("BACKGROUNDS", "rotate-interval")
-    config.set("BACKGROUNDS", "rotate-next", (datetime.now()+timedelta(minutes=interval)).strftime(DATE_FORMAT))
-    with open(CONFIG_DIR[-1], 'w') as f:
-        config.write(f)
 
     for i in args.heads:
+        if (args.howchanged == "chron" and 
+            config.has_option("BACKGROUNDS", "rotate-next-"+str(i)) and
+            datetime.strptime(config.get("BACKGROUNDS", "rotate-next"+str(i)), DATE_FORMAT) > datetime.now()): continue
+        
         fname = os.path.join(ImgFolder, config.get("BACKGROUNDS", "screen-"+str(i)+"-folder"))
         t = threading.Thread(target=thr_set_background, args=(i, fname, args.howchanged))
         t.start()
+        config.set("BACKGROUNDS", "rotate-next-"+str(i), (datetime.now()+timedelta(minutes=interval)).strftime(DATE_FORMAT))
+
+    with open(CONFIG_DIR[-1], 'w') as f:
+        config.write(f)
         
 
 if __name__ == "__main__":

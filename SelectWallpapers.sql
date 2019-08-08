@@ -18,22 +18,23 @@ ORDER BY date DESC;
 -- respecto al numero de veces que ha aparecido el wallpaper
 -- No sé, lo chulo sería un indicador que subiese cuando se aproxime
 -- el totalcnt a la media, y tambien cuando cnt se aproxime a cnt
-SELECT `head`, `path`, (count(*))*1.0/(totalcnt*totalcnt-avgcnt) ratio, count(*) cnt, totalcnt, avgcnt, (totalcnt*totalcnt-avgcnt)
+SELECT `head`, `path`, (count(*))*1.0/(totalcnt) ratio, count(*) cnt, totalcnt, avgcnt, (totalcnt*totalcnt-avgcnt)
 FROM wallpapers_leadchange JOIN (
 	SELECT head, path, count(*) totalcnt
 	FROM wallpapers_leadchange
 	GROUP BY head, path
-) USING (head, path) JOIN (
+) USING (head, path) LEFT JOIN (
 	SELECT head, avg(cnt) avgcnt
 	FROM (
 		SELECT head, count(*) cnt
 		FROM wallpapers_leadchange
-		GROUP BY path,head
+		GROUP BY path, head
 	)
+	GROUP BY head
 ) USING (head)
 WHERE leadchange = 'manual'
 GROUP BY `head`, `path`
--- HAVING cnt > 1	-- Así no salen los que sólo has saltado una vez
+HAVING totalcnt > avgcnt*0.5-- Así no salen los que sólo has saltado una vez
 ORDER BY ratio DESC;
 
 -- Ahora sí joder
