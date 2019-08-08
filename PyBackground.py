@@ -64,7 +64,7 @@ def main():
     for i in args.heads:
         if (args.howchanged == "chron" and 
             config.has_option("BACKGROUNDS", "rotate-next-"+str(i)) and
-            datetime.strptime(config.get("BACKGROUNDS", "rotate-next"+str(i)), DATE_FORMAT) > datetime.now()): continue
+            datetime.strptime(config.get("BACKGROUNDS", "rotate-next-"+str(i)), DATE_FORMAT) > datetime.now()): continue
         
         fname = os.path.join(ImgFolder, config.get("BACKGROUNDS", "screen-"+str(i)+"-folder"))
         t = threading.Thread(target=thr_set_background, args=(i, fname, args.howchanged))
