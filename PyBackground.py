@@ -13,6 +13,7 @@ from Xlib.ext import randr
 MORELESS = .10
 
 CONFIG_DIR = ["/home/davo/Scripts/Config.ini", "/home/davo/.config/scripts/config.ini"]
+EXTENSIONS = [".png", ".jpeg", ".jpg"]
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 config = configparser.RawConfigParser()
@@ -24,7 +25,8 @@ if (config.getboolean("BACKGROUNDS", "background-folder-auto")):
 
 def thr_set_background(head, fname, howchanged):
     con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "wallpapers.db"))
-    file = os.path.join(fname, random.choice(os.listdir(fname)))
+    filtered = filter(lambda x : os.path.splitext(x)[1] in EXTENSIONS, os.listdir(fname))
+    file = os.path.join(fname, random.choice(list(filtered)))
     os.system("/usr/bin/nitrogen --head={} --set-zoom-fill '{}'".format(head, file))
     con.execute("INSERT INTO wallpapers (head, path, howchanged) VALUES (?,?,?)", (head, file, howchanged))
     con.commit()
