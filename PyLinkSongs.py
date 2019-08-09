@@ -26,6 +26,7 @@ def process_file(fname):
         print("File %s linked" % fname)
 
 def process_m3u(fname):
+    print("Processing file %s" % (fname))
     with open(fname, "r") as f:
         for l in f.readlines():
             process_file(l.strip("\n"))
