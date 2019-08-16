@@ -23,6 +23,24 @@ ImgFolder = config.get("BACKGROUNDS", "background-folder")
 if (config.getboolean("BACKGROUNDS", "background-folder-auto")):
     ImgFolder = os.path.join(GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES), "Wallpapers/")
 
+def create_db_if_possible():
+    con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "wallpapers.db"))
+    
+    con.execute("""CREATE TABLE IF NOT EXISTS "wallpapers" (
+	"date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"head" INTEGER NOT NULL,
+	"path" TEXT NOT NULL,
+	"howchanged" TEXT DEFAULT 'auto',
+	PRIMARY KEY("date","head"))""")
+
+    con.execute("""CREATE VIEW IF NOT EXISTS wallpapers_leadchange AS
+    SELECT `date`, `head`, `path`, LEAD(howchanged, 1, 'unknown') OVER (PARTITION BY `head` ORDER BY date ASC) `leadchange`
+    FROM wallpapers
+    ORDER BY date DESC""")
+
+    con.commit()
+    con.close()
+
 def thr_set_background(head, fname, howchanged):
     con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "wallpapers.db"))
     filtered = filter(lambda x : os.path.splitext(x)[1] in EXTENSIONS, os.listdir(fname))
@@ -60,6 +78,7 @@ def main():
     print(args.heads)
     
     interval = config.getint("BACKGROUNDS", "rotate-interval")
+    create_db_if_possible()
 
     for i in args.heads:
         if (args.howchanged == "chron" and 
