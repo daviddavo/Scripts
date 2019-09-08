@@ -90,7 +90,8 @@ def main():
         t.start()
         config.set("BACKGROUNDS", "rotate-next-"+str(i), (datetime.now()+timedelta(minutes=interval)).strftime(DATE_FORMAT))
 
-    with open(CONFIG_DIR[-1], 'w') as f:
+    if not os.path.exists(os.path.dirname(CONFIG_DIR[-1])): os.makedirs(os.path.dirname(CONFIG_DIR[-1]))
+    with open(CONFIG_DIR[-1], 'w+') as f:
         config.write(f)
         
 
