@@ -25,7 +25,7 @@ main () {
     process_status "$(git status -s)" "Scripts"
 
     local repo status line
-    for repo in "$(find ~/Documentos -name .git -type d -prune -exec dirname {} \; )"; do
+    for repo in $(find ~/Documentos -name .git -type d -prune -exec dirname {} \; ); do
         cd "${repo}" || exit 1
         process_status "$(git status -s)" "${repo#$HOME/Documentos/}"
     done
