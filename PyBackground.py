@@ -103,7 +103,7 @@ def main():
     interval = config.getint("BACKGROUNDS", "rotate-interval")
     create_db_if_possible()
 
-    for i,x in enumerate(monitors):
+    for i,x in [(i,x) for i,x in enumerate(monitors) if i in args.heads]:
         if (args.howchanged == "chron" and 
             config.has_option("BACKGROUNDS", "rotate-next-"+str(i)) and
             datetime.strptime(config.get("BACKGROUNDS", "rotate-next-"+str(i)), DATE_FORMAT) > datetime.now()): continue
