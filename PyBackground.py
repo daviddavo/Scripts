@@ -27,9 +27,26 @@ def searchFractionInConfig(fr, thr):
     strend = -len('-folder')
     for k,v in [(k,v) for k,v in config.items("BACKGROUNDS") if k.startswith('res-') and k.endswith('-folder')]:
         cfgfr = Fraction(k[strstart:strend].replace('x', '/'))
-        print(cfgfr)
         if (1 - thr < cfgfr / fr < 1 + thr):
             return v
+
+def create_db_if_possible():
+    con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "wallpapers.db"))
+    
+    con.execute("""CREATE TABLE IF NOT EXISTS "wallpapers" (
+	"date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"head" INTEGER NOT NULL,
+	"path" TEXT NOT NULL,
+	"howchanged" TEXT DEFAULT 'auto',
+	PRIMARY KEY("date","head"))""")
+
+    con.execute("""CREATE VIEW IF NOT EXISTS wallpapers_leadchange AS
+    SELECT `date`, `head`, `path`, LEAD(howchanged, 1, 'unknown') OVER (PARTITION BY `head` ORDER BY date ASC) `leadchange`
+    FROM wallpapers
+    ORDER BY date DESC""")
+
+    con.commit()
+    con.close()
 
 def thr_set_background(n, head, howchanged):
     fr = Fraction(head.width, head.height)
@@ -84,6 +101,7 @@ def main():
     print(monitors)
     
     interval = config.getint("BACKGROUNDS", "rotate-interval")
+    create_db_if_possible()
 
     for i,x in enumerate(monitors):
         if (args.howchanged == "chron" and 
