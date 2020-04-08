@@ -4,7 +4,7 @@ import random
 from PIL import Image
 import mimetypes
 
-CONFIG_DIR   = "Config.ini"
+CONFIG_DIR   = ["/home/davo/Scripts/Config.ini", "/home/davo.config/scripts/config.ini"]
 
 config = configparser.RawConfigParser()
 config.read(CONFIG_DIR)
@@ -14,8 +14,18 @@ MORELESS = .10
 UNKNOWN_FOLDER = config.get("BACKGROUNDS", "unknown-subfolder")
 ERROR_FOLDER   = config.get("BACKGROUNDS", "error-subfolder")
 TOO_LOW_FOLDER = config.get("BACKGROUNDS", "too-low-resolution-subfolder")
+
 # UNKNOWN_FOLDER = None
-tosort = [(16/9,"16x9/", 1920, 1080), (9/16,"Vertical/", 1080, 1920), (4/3,"4x3/", 1400, 1050)]
+tosort = [
+    (16/9,"16x9/", 1920, 1080),
+    (9/16,"Vertical/", 1080, 1920),
+    (4/3,"4x3/", 1400, 1050),
+    (5/4, UNKNOWN_FOLDER+"/5x4", 1280, 1024),
+    (16/10, UNKNOWN_FOLDER+"/16x10", 1440, 900),
+    (3/2, UNKNOWN_FOLDER+"/3x2", 2160, 1440),
+    (21/9, UNKNOWN_FOLDER+"/21x9", 2560, 1080),
+    (1, UNKNOWN_FOLDER+"/1x1", 1000, 1000)
+]
 
 def getToMove(toMove, fname):
     files = os.listdir(fname)

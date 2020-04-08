@@ -5,10 +5,9 @@ import argparse
 import configparser
 import sqlite3
 import random
+import screeninfo
+from fractions import Fraction
 from gi.repository import GLib
-
-from Xlib import X,display
-from Xlib.ext import randr
 
 MORELESS = .10
 
@@ -23,12 +22,35 @@ ImgFolder = config.get("BACKGROUNDS", "background-folder")
 if (config.getboolean("BACKGROUNDS", "background-folder-auto")):
     ImgFolder = os.path.join(GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES), "Wallpapers/")
 
-def thr_set_background(head, fname, howchanged):
+def searchFractionInConfig(fr, thr):
+    strstart = len('res-')
+    strend = -len('-folder')
+    for k,v in [(k,v) for k,v in config.items("BACKGROUNDS") if k.startswith('res-') and k.endswith('-folder')]:
+        cfgfr = Fraction(k[strstart:strend].replace('x', '/'))
+        print(cfgfr)
+        if (1 - thr < cfgfr / fr < 1 + thr):
+            return v
+
+def thr_set_background(n, head, howchanged):
+    fr = Fraction(head.width, head.height)
+    res = f'{fr.numerator}x{fr.denominator}'
+    if config.has_option("BACKGROUNDS", f'res-{res}-folder'):
+        fname = os.path.join(ImgFolder, config.get("BACKGROUNDS", f'res-{res}-folder'))
+        print("Res %s found, using folder %s" % (res, fname))
+    elif config.has_option("BACKGROUNDS", f'screen-{n}-folder'):
+        fname = os.path.join(ImgFolder, config.get("BACKGROUNDS", f'screen-{n}-folder'))
+        print("Res %s not found, using folder %s" % (res, fname))
+    else:
+        fname = os.path.join(ImgFolder, searchFractionInConfig(fr, .5))
+        print(f"Res {res} not found neither head {n} in options, using {fname}")
+
     con = sqlite3.connect(os.path.join(os.path.dirname(__file__), "wallpapers.db"))
-    filtered = filter(lambda x : os.path.splitext(x)[1] in EXTENSIONS, os.listdir(fname))
+    filtered = [x for x in os.listdir(fname) if os.path.splitext(x)[1] in EXTENSIONS]
+    # filter(lambda x : os.path.splitext(x)[1] in EXTENSIONS, os.listdir(fname))
+    print(f"Found {len(filtered)} wallpapers")
     file = os.path.join(fname, random.choice(list(filtered)))
-    os.system("/usr/bin/nitrogen --head={} --set-zoom-fill '{}'".format(head, file))
-    con.execute("INSERT INTO wallpapers (head, path, howchanged) VALUES (?,?,?)", (head, file, howchanged))
+    os.system("/usr/bin/nitrogen --force-setter=xinerama --head={} --set-zoom-fill '{}'".format(n, file))
+    con.execute("INSERT INTO wallpapers (head, path, howchanged) VALUES (?,?,?)", (n, file, howchanged))
     con.commit()
     con.close()
 
@@ -55,19 +77,21 @@ def getArgParser(head_count=1):
 #feh --bg-fill /Directorio/Imagen.png
 #Nota, copia .fehbg a esta carpeta
 def main():
-    parser = getArgParser(config.getint("BACKGROUNDS", "number-screens"))
+    monitors = screeninfo.get_monitors(screeninfo.Enumerator.Xinerama)
+    parser = getArgParser(len(monitors))
     args = parser.parse_args()
     print(args.heads)
+    print(monitors)
     
     interval = config.getint("BACKGROUNDS", "rotate-interval")
 
-    for i in args.heads:
+    for i,x in enumerate(monitors):
         if (args.howchanged == "chron" and 
             config.has_option("BACKGROUNDS", "rotate-next-"+str(i)) and
             datetime.strptime(config.get("BACKGROUNDS", "rotate-next-"+str(i)), DATE_FORMAT) > datetime.now()): continue
         
-        fname = os.path.join(ImgFolder, config.get("BACKGROUNDS", "screen-"+str(i)+"-folder"))
-        t = threading.Thread(target=thr_set_background, args=(i, fname, args.howchanged))
+        # fname = os.path.join(ImgFolder, config.get("BACKGROUNDS", "screen-"+str(i)+"-folder"))
+        t = threading.Thread(target=thr_set_background, args=(i, x, args.howchanged))
         t.start()
         config.set("BACKGROUNDS", "rotate-next-"+str(i), (datetime.now()+timedelta(minutes=interval)).strftime(DATE_FORMAT))
 
