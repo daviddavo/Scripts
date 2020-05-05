@@ -53,7 +53,8 @@ main () {
 
     cd ~/Scripts
     process_status "$(LC_ALL=en_GB git status -bs)" "Scripts"
-    fetcth_if_should
+    fetch_if_should
+
 
     local repo status line
     for repo in $(find ~/Documentos -name .git -type d -prune -exec dirname {} \; ); do
