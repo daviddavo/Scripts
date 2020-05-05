@@ -2,8 +2,8 @@
 
 function fetch_if_should {
     date_compare="15 minutes ago"
-    if [ ! -f .git/FETCH_HEAD ] || [ $(stat -c %Y .git/FETCH_HEAD) -le $(date -d "${date_compare}" +%s) ]; then
-        # echo "Should fetch"
+    if [ ! -f .git/FETCH_HEAD ] \
+       || [ $(stat -c %Y .git/FETCH_HEAD) -le $(date -d "${date_compare}" +%s) ]; then
         git fetch -q --all
     fi
 }
@@ -18,9 +18,15 @@ function process_status {
         let cnt=0
         while read -r line; do
             if [ $cnt -eq 0 ]; then
-                cbehind=$(echo $line | sed -nr 's/.*\[[[:alpha:]]*[[:space:]]+([[:digit:]]+)\].*/\1/p')
-                if [ -n "${cbehind}" ]; then
-                    echo -n "\${color red}\${alignr}[${cbehind}]\${color}"
+                statbh=$(echo $line | sed -nr 's/.*\[([[:alpha:]]*)[[:space:]]+([[:digit:]]+)\].*/\1/p')
+                statn=$(echo $line | sed -nr 's/.*\[([[:alpha:]]*)[[:space:]]+([[:digit:]]+)\].*/\2/p')
+                # echo $statbh
+                if [ "${statbh}" = "behind" ]; then
+                    echo -n "\${color red}\${alignr}[${statn}]\${color}"
+                elif [ "${statbh}" = "ahead" ]; then
+                    echo -n "\${color green}\${alignr}[${statn}]\${color}"
+                elif [ ! -z "${statbh}" ]; then
+                    echo -n "\${color yellow}\${alignr}$statbh\${color}"
                 fi
             else
                 symbol="${line:0:2}"
@@ -30,7 +36,7 @@ function process_status {
             fi
             let cnt=$cnt+1
         done <<<"${status}"
-        if [ $cnt -le 1 ] && [ -z $cbehind ]; then
+        if [ $cnt -le 1 ] && [ -z $statn ]; then
             echo "\${alignr}\${color #5F9EA0}OK\${color}"
         else
             echo
@@ -41,16 +47,19 @@ function process_status {
 }
 
 main () {
-    process_status "$(yadm status -bs)" "yadm"
+    process_status "$(LC_ALL=en_GB yadm status -bs)" "yadm"
+    cd ~/.config/yadm/repo.git
+    fetch_if_should
 
     cd ~/Scripts
-    process_status "$(git status -bs)" "Scripts"
+    process_status "$(LC_ALL=en_GB git status -bs)" "Scripts"
+    fetcth_if_should
 
     local repo status line
     for repo in $(find ~/Documentos -name .git -type d -prune -exec dirname {} \; ); do
         cd "${repo}" || exit 1
         fetch_if_should
-        process_status "$(LC_ALL=en_GB.UTF-8 git status -bs)" "${repo#$HOME/Documentos/}"
+        process_status "$(LC_ALL=en_GB git status -bs)" "${repo#$HOME/Documentos/}"
     done
 }
 
