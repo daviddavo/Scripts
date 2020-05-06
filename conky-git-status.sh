@@ -4,7 +4,8 @@ function fetch_if_should {
     date_compare="15 minutes ago"
     if [ ! -f .git/FETCH_HEAD ] \
        || [ $(stat -c %Y .git/FETCH_HEAD) -le $(date -d "${date_compare}" +%s) ]; then
-        git fetch -q --all
+           echo ">>> Should fetch $(pwd)">&2
+        git fetch -q --all &
     fi
 }
 
@@ -22,17 +23,22 @@ function process_status {
                 statn=$(echo $line | sed -nr 's/.*\[([[:alpha:]]*)[[:space:]]+([[:digit:]]+)\].*/\2/p')
                 # echo $statbh
                 if [ "${statbh}" = "behind" ]; then
+                    echo
                     echo -n "\${color red}\${alignr}[${statn}]\${color}"
                 elif [ "${statbh}" = "ahead" ]; then
+                    echo
                     echo -n "\${color green}\${alignr}[${statn}]\${color}"
                 elif [ ! -z "${statbh}" ]; then
+                    echo
                     echo -n "\${color yellow}\${alignr}$statbh\${color}"
                 fi
             else
                 symbol="${line:0:2}"
                 symbol="${symbol// /}"
+                str=${line:2}
+                str=${str//#/\\#}
                 echo 
-                echo -n "\${alignr}${line:2} \${color #5F9EA0}${symbol}\${color}"
+                echo -n "\${alignr}${str} \${color #5F9EA0}${symbol}\${color}"
             fi
             let cnt=$cnt+1
         done <<<"${status}"
@@ -47,12 +53,14 @@ function process_status {
 }
 
 main () {
-    process_status "$(LC_ALL=en_GB yadm status -bs)" "yadm"
+    unset LANG
+    locale >&2
+    process_status "$(yadm status -bs)" "yadm"
     cd ~/.config/yadm/repo.git
     fetch_if_should
 
     cd ~/Scripts
-    process_status "$(LC_ALL=en_GB git status -bs)" "Scripts"
+    process_status "$(git status -bs)" "Scripts"
     fetch_if_should
 
 
@@ -60,7 +68,7 @@ main () {
     for repo in $(find ~/Documentos -name .git -type d -prune -exec dirname {} \; ); do
         cd "${repo}" || exit 1
         fetch_if_should
-        process_status "$(LC_ALL=en_GB git status -bs)" "${repo#$HOME/Documentos/}"
+        process_status "$(git status -bs)" "${repo#$HOME/Documentos/}"
     done
 }
 
