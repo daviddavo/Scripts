@@ -23,13 +23,10 @@ function process_status {
                 statn=$(echo $line | sed -nr 's/.*\[([[:alpha:]]*)[[:space:]]+([[:digit:]]+)\].*/\2/p')
                 # echo $statbh
                 if [ "${statbh}" = "behind" ]; then
-                    echo
                     echo -n "\${color red}\${alignr}[${statn}]\${color}"
                 elif [ "${statbh}" = "ahead" ]; then
-                    echo
                     echo -n "\${color green}\${alignr}[${statn}]\${color}"
                 elif [ ! -z "${statbh}" ]; then
-                    echo
                     echo -n "\${color yellow}\${alignr}$statbh\${color}"
                 fi
             else
@@ -37,7 +34,7 @@ function process_status {
                 symbol="${symbol// /}"
                 str=${line:2}
                 str=${str//#/\\#}
-                echo 
+                echo
                 echo -n "\${alignr}${str} \${color #5F9EA0}${symbol}\${color}"
             fi
             let cnt=$cnt+1
