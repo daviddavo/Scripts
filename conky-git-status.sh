@@ -16,6 +16,7 @@ function fetch_if_should {
 }
 
 function process_status {
+    locale >&2
     local status repo symbol cnt
     status=$1
     repo=$2
@@ -56,8 +57,8 @@ function process_status {
 }
 
 main () {
-    unset LANG
-    locale >&2
+    export LC_ALL="C"
+
     process_status "$(yadm status -bs)" "yadm"
     cd ~/.config/yadm/repo.git
     fetch_if_should 
