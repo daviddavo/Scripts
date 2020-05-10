@@ -1,15 +1,22 @@
 #!/bin/bash
 
 function fetch_if_should {
+    git_folder=$1
+
+    if [ -z "$git_folder" ]; then
+        git_folder="$(git rev-parse --git-dir)"
+    fi
+
     date_compare="15 minutes ago"
-    if [ ! -f .git/FETCH_HEAD ] \
-       || [ $(stat -c %Y .git/FETCH_HEAD) -le $(date -d "${date_compare}" +%s) ]; then
+    if [ ! -f "$git_folder/FETCH_HEAD" ] \
+       || [ $(stat -c %Y "$git_folder/FETCH_HEAD") -le $(date -d "${date_compare}" +%s) ]; then
            echo ">>> Should fetch $(pwd)">&2
-        git fetch -q --all &
+        git fetch -q --all & disown
     fi
 }
 
 function process_status {
+    locale >&2
     local status repo symbol cnt
     status=$1
     repo=$2
@@ -50,11 +57,11 @@ function process_status {
 }
 
 main () {
-    unset LANG
-    locale >&2
+    export LC_ALL="C"
+
     process_status "$(yadm status -bs)" "yadm"
     cd ~/.config/yadm/repo.git
-    fetch_if_should
+    fetch_if_should 
 
     cd ~/Scripts
     process_status "$(git status -bs)" "Scripts"
