@@ -8,8 +8,8 @@ import git
 from git import Repo
 
 FIND_MAXDEPTH=2 # ./**/.git
-
 TITLE_STRING = "${{goto 40}}${{color2}}{0}${{color}}{1}"
+YADM_REPO = os.path.expanduser("~/.config/yadm/repo.git")
 
 def item_string(item, symbol=None, color="#5F9EA0"):
     if isinstance(item, git.diff.Diff):
@@ -51,11 +51,13 @@ def display_title(path, displayname=None, ok=True, error=False, ahead=0, behind=
 
     print(TITLE_STRING.format(displayname, bhstr))
 
-def process_status(repo, dname):
-    # Untracked file
-    for path in repo.untracked_files:
-        print(item_string(path, symbol="??", color="yellow")) 
-        pass
+def process_status(repo, dname, display_untracked=True):
+    
+    if display_untracked:
+        # Untracked file
+        for path in repo.untracked_files:
+            print(item_string(path, symbol="??", color="yellow")) 
+            pass
 
     # Non-staged files
     for item in repo.index.diff(None):
@@ -68,16 +70,19 @@ def process_status(repo, dname):
         print(item_string(item, color="green"))
         # print("-"*60)
 
-def process_repo(path, dname):
+def process_repo(path, dname, display_untracked=True):
     if dname==None:
         dname = os.path.basename(path)
 
     repo = Repo(path)
     logging.debug(repo)
-    logging.debug(f"bare             {repo.bare}")
-    logging.debug(f"working_dir      {repo.working_dir}")
-    logging.debug(f"git_dir          {repo.git_dir}")
-    logging.debug(f"working_tree_dir {repo.working_tree_dir}")
+    logging.debug(f"bare              {repo.bare}")
+    logging.debug(f"working_dir       {repo.working_dir}")
+    logging.debug(f"git_dir           {repo.git_dir}")
+    logging.debug(f"working_tree_dir  {repo.working_tree_dir}")
+    logging.debug(f"common_dir        {repo.common_dir}")
+    logging.debug(f'is_git_dir        {git.repo.fun.is_git_dir(path)}')
+    logging.debug(f'display_untracked {display_untracked}')
     # logging.debug(f"git              {repo.git}")
     # logging.debug(f"active_branch    {repo.active_branch}")
 
@@ -95,7 +100,7 @@ def process_repo(path, dname):
             behind = sum(1 for _ in repo.iter_commits("origin/master..master"))
             if repo.is_dirty():
                 display_title(path, dname, ok=False, ahead=ahead, behind=behind)
-                process_status(repo, dname)
+                process_status(repo, dname, display_untracked)
             else:
                 display_title(path, dname, ok=True, ahead=ahead, behind=behind)
 
@@ -105,11 +110,15 @@ def process_repo(path, dname):
 
 def main(argv):
     repos_arr = [
-        ("~/.config/yadm/repo.git/", "Yadm"), 
         ("~/Scripts", "Scripts")
     ]
     repos_arr.extend([(x.strip('\n'), None) for x in sh.find(os.path.expanduser("~/Documentos"), 
         "-name", ".git", "-type", "d", "-prune", "-maxdepth", FIND_MAXDEPTH)])
+
+    # We process yadm this way cos it's special
+    os.environ["GIT_DIR"] = YADM_REPO
+    process_repo(YADM_REPO, "Yadm", False)
+    del os.environ["GIT_DIR"]
 
     for path, dname in repos_arr:
         path = os.path.expanduser(path)
