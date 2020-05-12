@@ -2,7 +2,9 @@
 
 import sys, os
 from datetime import datetime, timedelta
+from time import sleep
 import logging
+import random
 import sh
 import pickle
 import git
@@ -12,18 +14,18 @@ FIND_MAXDEPTH=2 # ./**/.git
 TITLE_STRING = "${{goto 40}}${{color2}}{0}${{color}}{1}"
 YADM_REPO = os.path.expanduser("~/.config/yadm/repo.git")
 DEFAULT_MEMENTO_PATH = "/tmp/conky-git-status.pickle"
-FETCH_INTERVAL = timedelta(seconds=30)
+FETCH_INTERVAL = timedelta(minutes=10)
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
 
 class RepoMemento:
-    coso = "Holiiiii"
     fetching = False
     lastfetch = None
-
-    """
-    def __getstate__(self):
-        logging.info(self.__dict__)
-        return self.__dict__
-    """
 
 class ProgramMemento:
     __repodict = {}
@@ -74,20 +76,30 @@ def should_fetch(repo, memento):
 def should_status(path):
     return True
 
-def fetching(path, memento):
-    return False 
+def fetching(repo, memento):
+    fetch_head = os.path.join(repo.common_dir, "FETCH_HEAD")
+    return os.path.isfile(fetch_head) and os.path.getsize(fetch_head) == 0
 
 def fetch(repo, memento):
     memento[repo].lastfetch = datetime.now()
+    pid = os.fork()
+    logging.info(f"Pid: {pid}")
+    if pid != 0:
+        return pid
+
     for remote in repo.remotes:
         logging.info(f"Fetching remote {remote} in repo {repo.git_dir}")
         remote.fetch()
+    logging.info(f"Fetching finished :D")
+    sys.exit(0)
 
 def display_title(path, displayname=None, ok=True, error=False, ahead=0, behind=0, fetching=False):
     bhstr = ""
     
     if error:
         bhstr = "${alignr}${color red}ERR${color}"
+    elif fetching:
+        bhstr = "${alignr}${color blue}[F]${color}"
     else:
         if ahead > 0 and behind == 0:
             bhstr = f"${{alignr}}${{color green}}[{ahead}]${{color}}"
@@ -101,12 +113,11 @@ def display_title(path, displayname=None, ok=True, error=False, ahead=0, behind=
     print(TITLE_STRING.format(displayname, bhstr))
 
 def process_status(repo, dname, display_untracked=True):
-    
+    logging.debug(f"pu: {display_untracked}, ufiles: {len(repo.untracked_files)}")
     if display_untracked:
         # Untracked file
         for path in repo.untracked_files:
             print(item_string(path, symbol="??", color="yellow")) 
-            pass
 
     # Non-staged files
     for item in repo.index.diff(None):
@@ -119,7 +130,8 @@ def process_status(repo, dname, display_untracked=True):
         print(item_string(item, color="green"))
         # print("-"*60)
 
-def process_repo(path, dname, memento, display_untracked=True):
+@static_vars(fetchs = 0)
+def process_repo(path, dname, memento, display_untracked=True, max_fetchs=1):
     if dname==None:
         dname = os.path.basename(path)
 
@@ -136,23 +148,26 @@ def process_repo(path, dname, memento, display_untracked=True):
     # logging.debug(f"active_branch    {repo.active_branch}")
 
     try:
-        if fetching(repo, memento):
-            # Show title but with a "fetching" thing
-            pass
-        elif should_fetch(repo, memento):
-            logging.info(f"Should fetch {repo}")
-            fetch(repo, memento)
+        f = fetching(repo, memento)
 
+        if not f and process_repo.fetchs < max_fetchs and should_fetch(repo, memento):
+            logging.info(f"Should fetch {repo}")
+            process_repo.fetchs += 1
+            fetch(repo, memento)
+            f = True
+
+        logging.debug(f"ppid: {os.getpid()}")
         if should_status(path):
             # TODO: Instead of master, use current branch
             # TODO: Display current branch in title if it's different to master
-            ahead = sum(1 for _ in repo.iter_commits("master..origin/master"))
-            behind = sum(1 for _ in repo.iter_commits("origin/master..master"))
-            if repo.is_dirty():
-                display_title(path, dname, ok=False, ahead=ahead, behind=behind)
-                process_status(repo, dname, display_untracked)
+            if f:
+                ahead = behind = 0
             else:
-                display_title(path, dname, ok=True, ahead=ahead, behind=behind)
+                ahead = sum(1 for _ in repo.iter_commits("master..origin/master"))
+                behind = sum(1 for _ in repo.iter_commits("origin/master..master"))
+
+            display_title(path, dname, ok=not repo.is_dirty(), fetching=f, ahead=ahead, behind=behind)
+            process_status(repo, dname, display_untracked)
 
     except Exception as e:
         display_title(path, dname, error=True)
@@ -169,18 +184,22 @@ def main(argv):
     memento.load_if_possible()
     # We process yadm this way cos it's special
     os.environ["GIT_DIR"] = YADM_REPO
-    process_repo(YADM_REPO, "Yadm", memento, False)
+    process_repo(YADM_REPO, "Yadm", memento, display_untracked=False)
     del os.environ["GIT_DIR"]
 
+    # process_repo("/home/davo/Documentos/gpu19", "gpu19", memento)
     for path, dname in repos_arr:
         path = os.path.expanduser(path)
         head,tail = os.path.split(path)
         if tail == ".git": path = head
         
-        process_repo(path, dname, memento)
+        process_repo(path, dname, memento, display_untracked=True)
+        sys.stdout.flush()
 
     memento.save()
 
 if __name__ == "__main__":
     logging.root.setLevel(logging.DEBUG)
     main(sys.argv)
+    logging.debug("Ima heading out")
+    sys.exit(0)
