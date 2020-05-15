@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from time import sleep
 import logging
 import random
+import re
 import sh
 import pickle
 import git
@@ -15,6 +16,7 @@ TITLE_STRING = "${{goto 40}}${{color2}}{0}${{color}}{1}"
 YADM_REPO = os.path.expanduser("~/.config/yadm/repo.git")
 DEFAULT_MEMENTO_PATH = "/tmp/conky-git-status.pickle"
 FETCH_INTERVAL = timedelta(minutes=10)
+MAX_NAME_WIDTH = 25
 
 def static_vars(**kwargs):
     def decorate(func):
@@ -93,22 +95,29 @@ def fetch(repo, memento):
     logging.info(f"Fetching finished :D")
     sys.exit(0)
 
-def display_title(path, displayname=None, ok=True, error=False, ahead=0, behind=0, fetching=False):
+def display_title(path, displayname=None, ok=True, error=False, ahead=0, behind=0, fetching=False, head=None):
     bhstr = ""
-    
+
     if error:
         bhstr = "${alignr}${color red}ERR${color}"
     elif fetching:
         bhstr = "${alignr}${color blue}[F]${color}"
     else:
         if ahead > 0 and behind == 0:
-            bhstr = f"${{alignr}}${{color green}}[{ahead}]${{color}}"
+            bhstr += f"${{alignr}}${{color green}}[{ahead}]${{color}}"
         elif ahead == 0 and behind > 0:
-            bhstr = f"${{alignr}}${{color red}}[{behind}]${{color}}"
+            bhstr += f"${{alignr}}${{color red}}[{behind}]${{color}}"
         elif ahead > 0 and behind > 0:
-            bhstr = f"${{alignr}}${{color green}}[{ahead},${{color red}}{behind}]${{color}}"
+            bhstr += f"${{alignr}}${{color green}}[{ahead},${{color red}}{behind}]${{color}}"
         elif ok and ahead == 0 and behind == 0:
-            bhstr = f"${{alignr}}${{color #5f9ea0}}OK${{color}}"
+            bhstr += f"${{alignr}}${{color #5f9ea0}}OK${{color}}"
+
+    if head != None:
+        if len(displayname) > MAX_NAME_WIDTH - len(f"... ({head})"):
+            displayname  = displayname[:MAX_NAME_WIDTH - len(f"... ({head})")] + "..."
+        displayname += f" ${{color cyan}}({head})${{color}}"
+    elif len(displayname) > MAX_NAME_WIDTH:
+        displayname = displayname[:MAX_NAME_WIDTH-3] + "..."
 
     print(TITLE_STRING.format(displayname, bhstr))
 
@@ -144,6 +153,7 @@ def process_repo(path, dname, memento, display_untracked=True, max_fetchs=1):
     logging.debug(f"common_dir        {repo.common_dir}")
     logging.debug(f'is_git_dir        {git.repo.fun.is_git_dir(path)}')
     logging.debug(f'display_untracked {display_untracked}')
+    logging.debug(f'head              {repo.head.ref}')
     # logging.debug(f"git              {repo.git}")
     # logging.debug(f"active_branch    {repo.active_branch}")
 
@@ -166,7 +176,12 @@ def process_repo(path, dname, memento, display_untracked=True, max_fetchs=1):
                 ahead = sum(1 for _ in repo.iter_commits("master..origin/master"))
                 behind = sum(1 for _ in repo.iter_commits("origin/master..master"))
 
-            display_title(path, dname, ok=not repo.is_dirty(), fetching=f, ahead=ahead, behind=behind)
+            head = None
+            if repo.head.ref != repo.heads.master:
+                head = repo.head.ref
+
+            display_title(path, dname, ok=not repo.is_dirty(), 
+                fetching=f, ahead=ahead, behind=behind, head=head)
             process_status(repo, dname, display_untracked)
 
     except Exception as e:
