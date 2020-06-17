@@ -173,8 +173,8 @@ def process_repo(path, dname, memento, display_untracked=True, max_fetchs=1):
             if f:
                 ahead = behind = 0
             else:
-                ahead = sum(1 for _ in repo.iter_commits("master..origin/master"))
-                behind = sum(1 for _ in repo.iter_commits("origin/master..master"))
+                behind = sum(1 for _ in repo.iter_commits("master..origin/master"))
+                ahead  = sum(1 for _ in repo.iter_commits("origin/master..master"))
 
             head = None
             if repo.head.ref != repo.heads.master:
