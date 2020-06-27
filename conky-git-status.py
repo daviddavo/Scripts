@@ -153,7 +153,7 @@ def process_repo(path, dname, memento, display_untracked=True, max_fetchs=1):
     logging.debug(f"common_dir        {repo.common_dir}")
     logging.debug(f'is_git_dir        {git.repo.fun.is_git_dir(path)}')
     logging.debug(f'display_untracked {display_untracked}')
-    logging.debug(f'head              {repo.head.ref}')
+    # logging.debug(f'head              {repo.head.ref}')
     # logging.debug(f"git              {repo.git}")
     # logging.debug(f"active_branch    {repo.active_branch}")
 
