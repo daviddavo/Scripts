@@ -78,7 +78,7 @@ def getArgParser(head_count=1):
 
     parser.add_argument("howchanged",
         help="Background change mode", 
-        choices=["manual","chron"], 
+        choices=["manual","chron","saved"], 
         default="manual", 
         nargs="?")
 
