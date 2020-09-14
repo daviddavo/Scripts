@@ -3,6 +3,7 @@ import sys, os, subprocess,time, configparser
 import random
 from PIL import Image
 import mimetypes
+from gi.repository import GLib
 
 CONFIG_DIR   = ["/home/davo/Scripts/Config.ini", "/home/davo.config/scripts/config.ini"]
 
@@ -93,7 +94,12 @@ def processFolder(fname):
                 
 
 def main():
-    sourceFolder = config.get("BACKGROUNDS", "background-folder")
+    if (config.getboolean("BACKGROUNDS", "background-folder-auto")):
+        sourceFolder = os.path.join(
+            GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES), 
+            "Wallpapers/")
+    else:
+        sourceFolder = config.get("BACKGROUNDS", "background-folder")
     processFolder(sourceFolder)
 
 if __name__ == "__main__":

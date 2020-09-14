@@ -192,7 +192,7 @@ def main(argv):
     repos_arr = [
         ("~/Scripts", "Scripts")
     ]
-    repos_arr.extend([(x.strip('\n'), None) for x in sh.find(os.path.expanduser("~/Documentos"), 
+    repos_arr.extend([(x.strip('\n'), None) for x in sh.find(os.path.expanduser("~/Documents"), 
         "-name", ".git", "-type", "d", "-prune", "-maxdepth", FIND_MAXDEPTH)])
 
     memento = ProgramMemento()
