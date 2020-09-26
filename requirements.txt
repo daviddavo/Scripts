@@ -1,8 +1,1 @@
-gitpython>=3.1.2
-sh
-screeninfo>=0.6.3
-beets-artistcountry
-beets-alternatives
-beets-ydl
-pyperclip
-python-daemon
+domain-connect-dyndns
