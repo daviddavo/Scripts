@@ -21,7 +21,7 @@ function traverse {
     done
 }
 
-imgfolder="$HOME/Imágenes/Wallpapers/"
+imgfolder="$HOME/Pictures/Wallpapers/"
 if [ ! -z "${1}" ]; then
     imgfolder="$1"
 fi
