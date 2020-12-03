@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ `hostname` = 'yamato' ] && grep -q ' home$' /etc/resolv.conf; then
+    until ssh -t iscandar /usr/bin/ncmpcpp $@ ; do sleep 5 ; done
+else
+    /usr/bin/ncmpcpp $@
+fi
+
