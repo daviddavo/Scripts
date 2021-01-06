@@ -1,2 +1,3 @@
 #!/bin/bash
-ncmpcpp -S visualizer
+
+~/Scripts/ncmpcpp -S clock "$@"
