@@ -13,7 +13,7 @@ from git import Repo
 
 FIND_MAXDEPTH=2 # ./**/.git
 TITLE_STRING = "${{goto 40}}${{color2}}{0}${{color}}{1}"
-YADM_REPO = os.path.expanduser("~/.config/yadm/repo.git")
+YADM_REPO = os.path.expanduser("~/.local/share/yadm/repo.git")
 DEFAULT_MEMENTO_PATH = "/tmp/conky-git-status.pickle"
 FETCH_INTERVAL = timedelta(minutes=10)
 MAX_NAME_WIDTH = 25
