@@ -1,10 +1,13 @@
 #!/bin/bash
 
+set -euxo pipefail
+
 emptyalbums=$(beet ls -a mb_albumid:'^$')
 if [ -z $emptyalbums ]; then
     ~/Scripts/OnPlaylist.sh
     beet alt update android
     beet mbsync
+    beet mbupdate 
     beet up
     beet lastgenre
     beet fetchart
