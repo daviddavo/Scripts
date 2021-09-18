@@ -2,3 +2,4 @@ domain-connect-dyndns
 sh
 screeninfo
 GitPython
+duplicate-finder

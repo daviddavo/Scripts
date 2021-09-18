@@ -32,3 +32,4 @@ fi
 
 echo "Traversing folder ${imgfolder}"
 traverse $imgfolder
+echo "Finished"

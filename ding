@@ -1,0 +1,4 @@
+#!/bin/bash
+"$@" &&
+( paplay /usr/share/sounds/freedesktop/stereo/complete.oga & ) ||
+( paplay /home/davo/Scripts/error.ogg & )
