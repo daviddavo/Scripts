@@ -1,0 +1,2 @@
+# Scripts
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/affd7953183e4621b168c7af91e36f24)](https://www.codacy.com/app/daviddavo-2/Scripts?utm_source=github.com&utm_medium=referral&utm_content=daviddavo/Scripts&utm_campaign=badger)
