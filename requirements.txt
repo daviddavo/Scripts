@@ -3,3 +3,4 @@ sh
 screeninfo
 GitPython
 duplicate-finder
+rofi-menu
