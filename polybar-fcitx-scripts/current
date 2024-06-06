@@ -6,7 +6,15 @@
 
 PATH="/bin"
 
-gdbus call --session --dest org.fcitx.Fcitx \
-    --object-path /inputmethod \
-    --method org.fcitx.Fcitx.InputMethod.GetCurrentIM |
+# fcitx4
+# gdbus call --session --dest org.fcitx.Fcitx \
+#     --object-path /inputmethod \
+#     --method org.fcitx.Fcitx.InputMethod.GetCurrentIM |
+#     grep -Po "'([^']++)'" | sed -Ee "s/'([^']++)'/\\1/g"
+
+# fcitx5
+gdbus call --session --dest org.fcitx.Fcitx5 \
+    --object-path /controller \
+    --method org.fcitx.Fcitx.Controller1.CurrentInputMethod |
     grep -Po "'([^']++)'" | sed -Ee "s/'([^']++)'/\\1/g"
+
