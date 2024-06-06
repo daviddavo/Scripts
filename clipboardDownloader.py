@@ -10,6 +10,8 @@ import shutil
 import pyperclip
 from concurrent.futures import ThreadPoolExecutor
 
+from tqdm import tqdm
+
 import gi
 gi.require_version('Notify', '0.7')
 from gi.repository import Notify
@@ -20,6 +22,23 @@ from PySortbck import whereToMove
 WP_FOLDER = os.path.expanduser("~/Pictures/Wallpapers/")
 MAX_SIZE = 500
 ACCEPTED_EXTENSIONS = ["jpeg", "png", "jpg", "gif"]
+
+# https://stackoverflow.com/a/53877507/4505998
+class DownloadProgressBar(tqdm):
+    def __init__(self, desc, **kwargs):
+        super().__init__(
+            unit='B',
+            unit_scale=True,
+            miniters=1,
+            desc=desc,
+            **kwargs
+        )
+
+    def update_to(self, b=1, bsize=1, tsize=None):
+        if tsize is not None:
+            self.total = tsize
+        self.update(b * bsize - self.n)
+
 
 def is_url_image(url):
     return os.path.splitext(url)[1][1:] in ACCEPTED_EXTENSIONS
@@ -32,9 +51,15 @@ def print_to_stdout(clipboard_content):
 def download_file(clipboard_content):
     destination = os.path.join(WP_FOLDER, os.path.basename(clipboard_content))
     print(f"Downloading file {clipboard_content} to {destination}")
-    with (urllib.request.urlopen(clipboard_content) as response,
-          open(destination, "wb") as fout):
-        shutil.copyfileobj(response, fout)
+
+    # with (urllib.request.urlopen(clipboard_content) as response,
+    #       open(destination, "wb") as fout):
+    #     shutil.copyfileobj(response, fout)
+    with DownloadProgressBar(clipboard_content) as dpb:
+        urllib.request.urlretrieve(clipboard_content,
+                                   filename=destination,
+                                   reporthook=dpb.update_to,
+                                   )
 
     wtm = whereToMove(destination)
     fwtm = os.path.join(wtm, os.path.basename(destination))
@@ -88,6 +113,10 @@ class ClipboardWatcher(threading.Thread):
 def main():
     pyperclip.set_clipboard("xsel")
     Notify.init("Clipboard Watcher")
+
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64)')]
+    urllib.request.install_opener(opener)
 
     watcher = ClipboardWatcher(is_url_image,
                                download_file,

@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys
 import os
+from pathlib import Path
 import subprocess
 import time
 import configparser
@@ -9,7 +10,7 @@ from PIL import Image
 import mimetypes
 from gi.repository import GLib
 
-CONFIG_DIR = ["/home/davo/Scripts/Config.ini", "/home/davo.config/scripts/config.ini"]
+CONFIG_DIR = ["/home/davo/Scripts/Config.ini", "/home/davo/.config/scripts/config.ini"]
 
 config = configparser.RawConfigParser()
 config.read(CONFIG_DIR)
@@ -57,17 +58,15 @@ def whereToMove(fpath):
         if (ERROR_FOLDER is not None):
             return ERROR_FOLDER
 
-def getToMove(toMove, fname):
+def getToMove(toMove, fname: Path):
     files = os.listdir(fname)
     for f in files:
-        af = os.path.join(fname, f)
+        af = fname / f
         wtm = whereToMove(af)
         if wtm:
             toMove[wtm].append(af)
-            print("Moving %s to %s" % (f, wtm))
 
-
-def processFolder(fname):
+def processFolder(fname: Path):
     toMove = {}
 
     def auxCreateFolder(folder):
@@ -92,12 +91,14 @@ def processFolder(fname):
 
     getToMove(toMove, fname)
 
+    print(toMove.keys())
     for k, v in toMove.items():
         for f in v:
-            ffrom = os.path.join(fname, f)
-            fto = os.path.join(fname, k, f)
-            if DEBUG: print("Moving from %s to %s" % (ffrom, fto))
-            os.rename(ffrom, fto)
+            fto = fname / k / f.name
+            if DEBUG: 
+                print(fname, k, f)
+                print(f"Moving from {f} to {fto}")
+            os.rename(f, fto)
 
 
                 
@@ -110,7 +111,8 @@ def main():
             "Wallpapers/")
     else:
         sourceFolder = config.get("BACKGROUNDS", "background-folder")
-    processFolder(sourceFolder)
+    processFolder(Path(sourceFolder))
+
 
 if __name__ == "__main__":
     main()

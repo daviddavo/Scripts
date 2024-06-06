@@ -100,7 +100,7 @@ class DBConnection:
         if d == None: return None
         return d[0]
 
-def get_background(n, head):
+def get_background_folder(n, head):
     fr = Fraction(head.width, head.height)
     res = f'{fr.numerator}x{fr.denominator}'
     if config.has_option("BACKGROUNDS", f'res-{res}-folder'):
@@ -112,11 +112,16 @@ def get_background(n, head):
     else:
         fname = os.path.join(ImgFolder, searchFractionInConfig(fr, .5))
         print(f"Res {res} not found neither head {n} in options, using {fname}")
+    
+    return fname
 
-    filtered = [x for x in os.listdir(fname) if os.path.splitext(x)[1] in EXTENSIONS]
+def get_background(n, head):
+    bg_folder = get_background_folder(n, head)
+
+    filtered = [x for x in os.listdir(bg_folder) if os.path.splitext(x)[1] in EXTENSIONS]
     # filter(lambda x : os.path.splitext(x)[1] in EXTENSIONS, os.listdir(fname))
     print(f"Found {len(filtered)} wallpapers")
-    return os.path.join(fname, random.choice(list(filtered)))
+    return os.path.join(bg_folder, random.choice(list(filtered)))
 
 def thr_set_background(n, file):
     print(f"Setting wallpaper {file} on head {n}")
